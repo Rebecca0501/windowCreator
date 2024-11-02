@@ -1,16 +1,15 @@
 import sys
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QHBoxLayout, 
+from PyQt6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout, 
                              QVBoxLayout, QLabel, QComboBox, QLineEdit, 
                              QTableWidget, QTableWidgetItem, QGridLayout, 
-                             QStackedLayout, QScrollArea)
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QPainter, QColor
+                             QStackedLayout, QScrollArea, QPushButton, QSizePolicy, )
+from PreviewArea import *
 
 class WindowGeneratorApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("窗戶圖檔生成器")
-        self.setGeometry(100, 100, 1200, 800)
+        self.setGeometry(0, 0, 1200, 800)
 
         # 主容器
         main_widget = QWidget()
@@ -127,9 +126,29 @@ class WindowGeneratorApp(QMainWindow):
 
         # 右側設計預覽介面
         preview_panel = QWidget()
-        preview_layout = QVBoxLayout()
-        preview_panel.setLayout(preview_layout)
-        preview_panel.setStyleSheet("background-color: lightgray;")
+        self.preview_layout = QVBoxLayout()
+        
+        # 預覽區域 - 移除paintEvent的覆蓋
+        self.preview_area = PreviewArea()
+        self.preview_area.setStyleSheet("background-color: lightgray;")
+        self.preview_area.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.preview_layout.addWidget(self.preview_area)
+        
+        # 預覽按鈕
+        preview_button = QPushButton("預覽")
+        preview_button.setFixedSize(100, 30)  # 設置按鈕大小
+        preview_button.clicked.connect(self.on_preview_clicked)  # 連接點擊事件
+        #preview_button.clicked.connect(self.show_preview)
+        
+        # 創建一個水平佈局來放置按鈕，實現按鈕置中
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()  # 在按鈕左側添加彈性空間
+        button_layout.addWidget(preview_button)
+        button_layout.addStretch()  # 在按鈕右側添加彈性空間
+        
+        # 將按鈕佈局添加到預覽面板佈局中
+        self.preview_layout.addLayout(button_layout)
+        preview_panel.setLayout(self.preview_layout)
 
         # 將左側和右側面板加入主佈局
         main_layout.addWidget(left_panel, 1)
@@ -245,11 +264,27 @@ class WindowGeneratorApp(QMainWindow):
             # 如果輸入無效，不做任何操作
             pass
 
-def main():
-    app = QApplication(sys.argv)
-    window = WindowGeneratorApp()
-    window.show()
-    sys.exit(app.exec())
+    def get_size_values(self):
+        size_values = {}
+        for label, edit in zip(self.size_labels, self.size_edits):
+            value = edit.text()  # 獲取輸入框的文字
+            # 轉換為浮點數（如果輸入是數字的話）
+            try:
+                value = float(value)
+            except ValueError:
+                print(f"{label} 的輸入必須是數字")
+                continue
+            size_values[label] = value
+        return size_values
 
-if __name__ == "__main__":
-    main()
+    def show_preview(self):
+        self.preview_layout.update()
+
+    def on_preview_clicked(self):
+        """預覽按鈕點擊事件處理"""
+        # 這裡可以添加預覽功能的實現
+        self.get_size_values()
+        print("預覽按鈕被點擊")
+        print(self.get_size_values())
+        self.show_preview()
+        
