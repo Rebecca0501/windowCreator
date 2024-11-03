@@ -5,6 +5,13 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout,
                              QStackedLayout, QScrollArea, QPushButton, QSizePolicy, )
 from PreviewArea import *
 
+class CustomLineEdit(QLineEdit):
+    def __init__(self, placeholder_text="", validator=None):
+        super().__init__()
+        self.setPlaceholderText(placeholder_text)
+        if validator:
+            self.setValidator(validator)
+
 class WindowGeneratorApp(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -138,12 +145,23 @@ class WindowGeneratorApp(QMainWindow):
         preview_button = QPushButton("預覽")
         preview_button.setFixedSize(100, 30)  # 設置按鈕大小
         preview_button.clicked.connect(self.on_preview_clicked)  # 連接點擊事件
-        #preview_button.clicked.connect(self.show_preview)
+        
+        # CAD下載按鈕
+        downloadCAD_button = QPushButton("CAD下載")
+        downloadCAD_button.setFixedSize(100, 30)  # 設置按鈕大小
+        downloadCAD_button.clicked.connect(self.on_downloadCAD_clicked)  # 連接點擊事件
+
+        # CAD下載按鈕
+        downloadExcel_button = QPushButton("Excel下載")
+        downloadExcel_button.setFixedSize(100, 30)  # 設置按鈕大小
+        downloadExcel_button.clicked.connect(self.on_downloadExcel_clicked)  # 連接點擊事件
         
         # 創建一個水平佈局來放置按鈕，實現按鈕置中
         button_layout = QHBoxLayout()
         button_layout.addStretch()  # 在按鈕左側添加彈性空間
         button_layout.addWidget(preview_button)
+        button_layout.addWidget(downloadCAD_button)
+        button_layout.addWidget(downloadExcel_button)
         button_layout.addStretch()  # 在按鈕右側添加彈性空間
         
         # 將按鈕佈局添加到預覽面板佈局中
@@ -229,37 +247,115 @@ class WindowGeneratorApp(QMainWindow):
         
         try:
             if current_type == "type 1":
-                rows = int(self.type1_row_edit.text()) * int(self.type1_col_edit.text()) + 1
-                rows_count = int(self.type1_row_edit.text()) * int(self.type1_col_edit.text())
+                unit_in_rows = [int(self.type1_col_edit.text())] * int(self.type1_row_edit.text())
+
+                unit_count = sum(unit_in_rows)
+                table_rows_count = unit_count
             elif current_type == "type 2":
-                row_count = int(self.type2_row_edit.text())
                 # 計算單元數總和
                 unit_inputs = [
                     self.type2_scroll_layout.itemAt(i).widget().layout().itemAt(1).widget() 
                     for i in range(self.type2_scroll_layout.count())
                 ]
-                unit_count = sum(int(edit.text() or 0) for edit in unit_inputs)
-                rows = row_count + 1 
-                rows_count = unit_count
+
+                unit_in_rows = []
+                for input_widget in unit_inputs:
+                    text = input_widget.text()  # 取得文字內容
+                    try:
+                        value = int(text)       # 轉換成整數
+                        unit_in_rows.append(value)
+                    except ValueError:
+                        # 處理無效輸入
+                        print(f"無效的整數輸入: {text}")
+
+                unit_count = sum(unit_in_rows)
+                table_rows_count = unit_count
+                
             else:  # type 3
-                col_count = int(self.type3_col_edit.text())
                 # 計算單元數總和
                 unit_inputs = [
                     self.type3_scroll_layout.itemAt(i).widget().layout().itemAt(1).widget() 
                     for i in range(self.type3_scroll_layout.count())
                 ]
-                unit_count = sum(int(edit.text() or 0) for edit in unit_inputs)
-                rows = col_count + 1
-                rows_count = unit_count
+                unit_in_rows = []
+                for input_widget in unit_inputs:
+                    text = input_widget.text()  # 取得文字內容
+                    try:
+                        value = int(text)       # 轉換成整數
+                        unit_in_rows.append(value)
+                    except ValueError:
+                        # 處理無效輸入
+                        print(f"無效的整數輸入: {text}")
+
+                unit_count = sum(unit_in_rows)
+                table_rows_count = unit_count
             
             # 設置表格行數
-            self.unit_table.setRowCount(rows_count)
+            self.unit_table.setRowCount(table_rows_count)
             
             # 填充單元編號
-            for row in range(rows_count):
-                unit_number_item = QTableWidgetItem(str(row))
-                self.unit_table.setItem(row, 0, unit_number_item)
-        
+            if current_type == "type 1":
+                unit_number_item = []
+                # 使用ASCII碼，從'A'開始
+                for index, num in enumerate(unit_in_rows):
+                    # 獲取對應的字母，65是'A'的ASCII碼
+                    letter = chr(65 + index)
+                    # 為每個數字生成對應數量的序列
+                    for i in range(1, num + 1):
+                        unit_number_item.append(f"{letter}{i}")
+                for index, item in enumerate(unit_number_item):
+                    self.unit_table.setItem(index, 0, QTableWidgetItem(str(item)))
+            elif current_type == "type 2":
+                unit_number_item = []
+                # 使用ASCII碼，從'A'開始
+                for index, num in enumerate(unit_in_rows):
+                    # 獲取對應的字母，65是'A'的ASCII碼
+                    letter = chr(65 + index)
+                    # 為每個數字生成對應數量的序列
+                    for i in range(1, num + 1):
+                        unit_number_item.append(f"{letter}{i}")
+                for index, item in enumerate(unit_number_item):
+                    self.unit_table.setItem(index, 0, QTableWidgetItem(str(item)))
+            else:  # type 3
+                unit_number_item = []
+                for index, item in enumerate(unit_in_rows):
+                    for i in range(item):
+                        letter = chr(65 + i)
+                        unit_number_item.append(f"{letter}{index+1}")
+                for index, item in enumerate(unit_number_item):
+                    self.unit_table.setItem(index, 0, QTableWidgetItem(str(item)))
+
+            
+            sash_options = ['固定窗', '橫拉窗', '推窗']
+            for row in range(table_rows_count):
+                sash_unit_number = self.unit_table.item(row, 0)
+                sash_unit_number.setFlags(sash_unit_number.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                
+                # 在第二列添加窗扇選擇的 ComboBox
+                combo = QComboBox()
+                combo.addItems(sash_options)
+                self.unit_table.setCellWidget(row, 1, combo)
+
+                # 在第三列添加窗扇邊框寬度的輸入欄位
+                sash_frame_edit = CustomLineEdit(placeholder_text="請輸入邊框寬度")
+                self.unit_table.setCellWidget(row, 2, sash_frame_edit)
+
+                # 在第四列添加窗扇數量的輸入欄位
+                sash_num_edit = CustomLineEdit(placeholder_text="請輸入窗扇數量")
+                self.unit_table.setCellWidget(row, 3, sash_num_edit)
+
+                # 在第五列添加窗扇寬度的輸入欄位
+                sash_width_edit = CustomLineEdit(placeholder_text="請輸入窗扇寬度")
+                self.unit_table.setCellWidget(row, 4, sash_width_edit)
+
+                # 在第六列添加窗扇寬度的輸入欄位
+                sash_height_edit = CustomLineEdit(placeholder_text="請輸入窗扇高度")
+                self.unit_table.setCellWidget(row, 5, sash_height_edit)
+
+            
+            
+                
+            
         except (ValueError, TypeError):
             # 如果輸入無效，不做任何操作
             pass
@@ -283,8 +379,16 @@ class WindowGeneratorApp(QMainWindow):
     def on_preview_clicked(self):
         """預覽按鈕點擊事件處理"""
         # 這裡可以添加預覽功能的實現
-        self.get_size_values()
         print("預覽按鈕被點擊")
         print(self.get_size_values())
+        print(self.type_combo.currentText())
         self.show_preview()
+
+    def on_downloadCAD_clicked(self):
+        """下載CAD檔按鈕點擊事件處理"""
+        print("下載CAD檔被點擊")
+
+    def on_downloadExcel_clicked(self):
+        """下載Excel檔按鈕點擊事件處理"""
+        print("下載Excel檔被點擊")
         
