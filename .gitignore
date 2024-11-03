@@ -1,3 +1,5 @@
 __pycache__/
-unittest
+unittest_table_cellfix.py
+unittest_table.py
+unittest_table_QLineEdit.py
 .venv/
