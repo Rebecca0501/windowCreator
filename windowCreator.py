@@ -380,8 +380,8 @@ class WindowGeneratorApp(QMainWindow):
         """預覽按鈕點擊事件處理"""
         # 這裡可以添加預覽功能的實現
         print("預覽按鈕被點擊")
-        print(self.get_size_values())
-        print(self.type_combo.currentText())
+        
+        self.preview_area.update_preview(self.get_size_values(),self.type_combo.currentText())
         self.show_preview()
 
     def on_downloadCAD_clicked(self):
